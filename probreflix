@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Netflix Clone</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --netflix-red: #E50914;
+            --netflix-dark: #141414;
+            --netflix-light-dark: #222222;
+            --text-color-light: #f5f5f5;
+            --text-color-gray: #aaaaaa;
+            --card-hover-scale: 1.05;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--netflix-dark);
+            color: var(--text-color-light);
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            overflow-x: hidden; 
+        }
+
+        header {
+            background-color: var(--netflix-light-dark);
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .logo {
+            color: var(--netflix-red);
+            font-size: 2.5em;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.6);
+        }
+
+        .search-bar {
+            display: flex;
+            gap: 10px;
+        }
+
+        .search-bar input {
+            padding: 10px 15px;
+            border: 1px solid var(--text-color-gray);
+            border-radius: 5px;
+            background-color: var(--netflix-light-dark);
+            color: var(--text-color-light);
+            font-size: 1em;
+            width: 200px;
+            outline: none;
+        }
+
+        .search-bar input::placeholder {
+            color: var(--text-color-gray);
+        }
+
+        .search-bar button {
+            background-color: var(--netflix-red);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s ease;
+        }
+
+        .search-bar button:hover {
+            background-color: #ff222d;
+        }
+
+        main {
+            padding: 40px 20px;
+        }
+
+        .section-title {
+            font-size: 2em;
+            margin-bottom: 25px;
+            color: var(--text-color-light);
+            text-align: center;
+        }
+
+        #movies-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 20px;
+            justify-content: center;
+        }
+
+        .movie-card {
+            background-color: var(--netflix-light-dark);
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+            position: relative; 
+        }
+
+        .movie-card:hover {
+            transform: scale(var(--card-hover-scale));
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
+            z-index: 10; 
+        }
+
+        .movie-card img {
+            width: 100%;
+            height: 270px; 
+            object-fit: cover;
+            display: block;
+        }
+
+        .movie-card-info {
+            padding: 15px;
+            text-align: center;
+            min-height: 80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .movie-card-info h3 {
+            margin: 0 0 10px 0;
+            font-size: 1.1em;
+            color: var(--text-color-light);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .movie-card-info p {
+            margin: 0;
+            font-size: 0.85em;
+            color: var(--text-color-gray);
+        }
+
+        #loading-message, #error-message {
+            text-align: center;
+            font-size: 1.5em;
+            padding: 30px;
+            color: var(--text-color-light);
+            display: none;
+            margin-top: 50px;
+        }
+
+        #error-message {
+            color: var(--netflix-red);
+            background-color: #3b0a0a;
+            border-radius: 8px;
+        }
+
+       
+        .modal {
+            display: none; 
+            position: fixed; 
+            z-index: 1001; 
+            left: 0;
+            top: 0;
+            width: 100%; 
+            height: 100%; 
+            overflow: auto; 
+            background-color: rgba(0,0,0,0.8); 
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background-color: var(--netflix-light-dark);
+            margin: auto;
+            padding: 30px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 800px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.9);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .close-button {
+            color: var(--text-color-gray);
+            font-size: 2em;
+            font-weight: bold;
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .close-button:hover,
+        .close-button:focus {
+            color: var(--netflix-red);
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .modal-body {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+
+        .modal-poster {
+            flex-shrink: 0;
+            width: 200px;
+            height: 300px;
+            object-fit: cover;
+            border-radius: 5px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+        }
+
+        .modal-details {
+            flex-grow: 1;
+            text-align: left;
+        }
+
+        .modal-details h2 {
+            font-size: 2em;
+            color: var(--text-color-light);
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+        .modal-details p {
+            margin-bottom: 8px;
+            font-size: 1em;
+            line-height: 1.5;
+        }
+
+        .modal-details .rating {
+            color: #FFD700; 
+            font-weight: 700;
+            font-size: 1.1em;
+        }
+
+       
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                padding: 15px 20px;
+                gap: 15px;
+            }
+            .logo {
+                font-size: 2em;
+            }
+            .search-bar {
+                width: 100%;
+                justify-content: center;
+            }
+            .search-bar input {
+                width: calc(100% - 80px); 
+            }
+            main {
+                padding: 20px 10px;
+            }
+            #movies-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                gap: 15px;
+            }
+            .movie-card img {
+                height: 220px;
+            }
+            .movie-card-info h3 {
+                font-size: 1em;
+            }
+            .modal-body {
+                flex-direction: column;
+                align-items: center;
+            }
+            .modal-poster {
+                width: 150px;
+                height: 225px;
+            }
+            .modal-details {
+                text-align: center;
+            }
+            .modal-details h2 {
+                font-size: 1.5em;
+            }
+            .modal-content {
+                padding: 20px;
+            }
+            .close-button {
+                font-size: 1.5em;
+                top: 5px;
+                right: 10px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 2em;
+            }
+            .movie-card {
+                width: 100%; 
+                max-width: 200px; 
+                margin: 0 auto; 
+            }
+             #movies-grid {
+                grid-template-columns: 1fr; 
+                justify-items: center;
+             }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">POBREFLIX</div>
+        <div class="search-bar">
+            <input type="text" id="search-input" placeholder="Buscar filmes ou séries...">
+            <button id="search-button">Buscar</button>
+        </div>
+    </header>
+
+    <main>
+        <h2 class="section-title">Filmes e Séries em Alta</h2>
+        <div id="loading-message" style="display: none;">Carregando conteúdo...</div>
+        <div id="error-message" style="display: none;"></div>
+        <div id="movies-grid">
+            </div>
+    </main>
+
+    <div id="details-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <div class="modal-body">
+                <img id="modal-poster" class="modal-poster" src="" alt="Poster do Filme/Série">
+                <div class="modal-details">
+                    <h2 id="modal-title"></h2>
+                    <p><strong>Lançamento:</strong> <span id="modal-release-date"></span></p>
+                    <p><strong>Gênero:</strong> <span id="modal-genres"></span></p>
+                    <p><strong>Avaliação:</strong> <span id="modal-rating" class="rating"></span> / 10</p>
+                    <p id="modal-overview"></p>
+                </div>
+            </div>
+            <div id="modal-loading" style="display: none; text-align: center; color: var(--text-color-light);">Carregando detalhes...</div>
+            <div id="modal-error" style="display: none; text-align: center; color: var(--netflix-red);"></div>
+        </div>
+    </div>
+
+    <script>
+       
+        const API_KEY = 'SUA_CHAVE_DE_API_TMDb'; 
+        const BASE_URL = 'https://api.themoviedb.org/3';
+        const IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w300'; 
+        const moviesGrid = document.getElementById('movies-grid');
+        const loadingMessage = document.getElementById('loading-message');
+        const errorMessage = document.getElementById('error-message');
+        const searchInput = document.getElementById('search-input');
+        const searchButton = document.getElementById('search-button');
+        const sectionTitle = document.querySelector('.section-title');
+
+      
+        const detailsModal = document.getElementById('details-modal');
+        const closeButton = document.querySelector('.close-button');
+        const modalPoster = document.getElementById('modal-poster');
+        const modalTitle = document.getElementById('modal-title');
+        const modalReleaseDate = document.getElementById('modal-release-date');
+        const modalGenres = document.getElementById('modal-genres');
+        const modalRating = document.getElementById('modal-rating');
+        const modalOverview = document.getElementById('modal-overview');
+        const modalLoading = document.getElementById('modal-loading');
+        const modalError = document.getElementById('modal-error');
+
+
+    
+        function showMessage(element, message, isError = false) {
+            element.textContent = message;
+            element.style.display = 'block';
+            element.className = isError ? 'error-message' : '';
+        }
+
+        function hideMessage(element) {
+            element.style.display = 'none';
+            element.textContent = '';
+        }
+
+        
+        function showMainLoading() { showMessage(loadingMessage, 'Carregando conteúdo...'); moviesGrid.innerHTML = ''; hideMessage(errorMessage); }
+        function hideMainLoading() { hideMessage(loadingMessage); }
+        function showMainError(msg) { showMessage(errorMessage, msg, true); moviesGrid.innerHTML = ''; hideMainLoading(); }
+
+        function showModalLoading() { showMessage(modalLoading, 'Carregando detalhes...'); hideMessage(modalError); }
+        function hideModalLoading() { hideMessage(modalLoading); }
+        function showModalError(msg) { showMessage(modalError, msg, true); hideModalLoading(); }
+
+     
+        async function fetchTMDb(endpoint, params = {}) {
+            const urlParams = new URLSearchParams({
+                api_key: API_KEY,
+                language: 'pt-BR', // Para obter descrições em português
+                ...params
+            });
+            const url = `${BASE_URL}${endpoint}?${urlParams.toString()}`;
+
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    let errorData = await response.json().catch(() => ({}));
+                    throw new Error(`HTTP error! Status: ${response.status} - ${errorData.status_message || 'Erro desconhecido da API.'}`);
+                }
+                const data = await response.json();
+                if (data.success === false) { 
+                    throw new Error(`Erro da API: ${data.status_message || 'Erro desconhecido da API.'}`);
+                }
+                return data;
+            } catch (error) {
+                console.error(`Erro ao buscar dados da API: ${endpoint}`, error);
+                throw error; 
+            }
+        }
+
+        
+        function renderMovieCard(item) {
+            const card = document.createElement('div');
+            card.classList.add('movie-card');
+            card.setAttribute('data-id', item.id);
+            card.setAttribute('data-type', item.media_type || 'movie'); // Assume 'movie' se não tiver media_type (e.g., em buscas)
+
+            const posterPath = item.poster_path ? `${IMAGE_BASE_URL}${item.poster_path}` : 'https://via.placeholder.com/300x450?text=Poster+N%C3%A3o+Dispon%C3%ADvel';
+
+            card.innerHTML = `
+                <img src="${posterPath}" alt="${item.title || item.name}">
+                <div class="movie-card-info">
+                    <h3>${item.title || item.name}</h3>
+                    <p>${(item.release_date || item.first_air_date || '').substring(0, 4)}</p>
+                </div>
+            `;
+            
+            card.addEventListener('click', () => openDetailsModal(item.id, item.media_type || 'movie'));
+            moviesGrid.appendChild(card);
+        }
+
+       
+        async function loadTrendingContent() {
+            showMainLoading();
+            try {
+                const data = await fetchTMDb('/trending/all/day');
+                hideMainLoading();
+                if (data.results && data.results.length > 0) {
+                    data.results.forEach(item => {
+                        // Filtra itens sem poster ou título/nome
+                        if (item.poster_path && (item.title || item.name)) {
+                             renderMovieCard(item);
+                        }
+                    });
+                } else {
+                    showMainError('Nenhum conteúdo em alta encontrado.');
+                }
+            } catch (error) {
+                showMainError(`Não foi possível carregar o conteúdo em alta. ${error.message}`);
+            }
+        }
+
+       
+        async function searchContent(query) {
+            if (!query.trim()) {
+                showMainError('Por favor, digite algo para buscar.');
+                return;
+            }
+            sectionTitle.textContent = `Resultados da busca por "${query}"`;
+            showMainLoading();
+            try {
+                const data = await fetchTMDb('/search/multi', { query: query }); // Busca por filmes e séries
+                hideMainLoading();
+                moviesGrid.innerHTML = ''; // Limpa a grid para novos resultados
+
+                if (data.results && data.results.length > 0) {
+                    data.results.forEach(item => {
+                        
+                        if ((item.media_type === 'movie' || item.media_type === 'tv') && item.poster_path && (item.title || item.name)) {
+                            renderMovieCard(item);
+                        }
+                    });
+                } else {
+                    showMainError(`Nenhum resultado encontrado para "${query}".`);
+                }
+            } catch (error) {
+                showMainError(`Falha na busca: ${error.message}`);
+            }
+        }
+
+       
+        let allGenres = []; // Cache para gêneros
+
+        async function fetchGenres() {
+            if (allGenres.length > 0) return; // Já carregado
+            try {
+                const movieGenresData = await fetchTMDb('/genre/movie/list');
+                const tvGenresData = await fetchTMDb('/genre/tv/list');
+                allGenres = [...movieGenresData.genres, ...tvGenresData.genres];
+            } catch (error) {
+                console.error('Erro ao carregar gêneros:', error);
+               
+            }
+        }
+
+        function getGenreNames(genreIds) {
+            if (!genreIds || genreIds.length === 0) return 'Não informado';
+            if (allGenres.length === 0) return 'Carregando...'; 
+            
+            return genreIds.map(id => {
+                const genre = allGenres.find(g => g.id === id);
+                return genre ? genre.name : 'Desconhecido';
+            }).join(', ');
+        }
+
+        async function openDetailsModal(id, type) {
+            detailsModal.style.display = 'flex'; 
+            showModalLoading();
+            hideMessage(modalError);
+
+            try {
+               
+                await fetchGenres(); 
+
+                const endpoint = type === 'movie' ? `/movie/${id}` : `/tv/${id}`;
+                const data = await fetchTMDb(endpoint);
+
+                hideModalLoading();
+
+                modalTitle.textContent = data.title || data.name;
+                modalReleaseDate.textContent = data.release_date || data.first_air_date || 'N/A';
+                modalOverview.textContent = data.overview || 'Sinopse não disponível.';
+                modalRating.textContent = data.vote_average ? data.vote_average.toFixed(1) : 'N/A';
+                modalPoster.src = data.poster_path ? `${IMAGE_BASE_URL}${data.poster_path}` : 'https://via.placeholder.com/300x450?text=Poster+N%C3%A3o+Dispon%C3%ADvel';
+                modalPoster.alt = data.title || data.name;
+                
+                modalGenres.textContent = getGenreNames(data.genres ? data.genres.map(g => g.id) : []);
+
+            } catch (error) {
+                showModalError(`Não foi possível carregar os detalhes. ${error.message}`);
+                console.error('Erro ao abrir modal de detalhes:', error);
+            }
+        }
+
+       
+        searchButton.addEventListener('click', () => {
+            const query = searchInput.value;
+            searchContent(query);
+        });
+
+        searchInput.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') {
+                searchButton.click();
+            }
+        });
+
+        closeButton.addEventListener('click', () => {
+            detailsModal.style.display = 'none';
+        });
+
+        
+        window.addEventListener('click', (event) => {
+            if (event.target === detailsModal) {
+                detailsModal.style.display = 'none';
+            }
+        });
+
+       
+        document.addEventListener('DOMContentLoaded', () => {
+            loadTrendingContent(); 
+        });
+    </script>
+</body>
+</html>
